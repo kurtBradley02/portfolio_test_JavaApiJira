@@ -32,6 +32,25 @@
 			<artifactId>testFollows</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.13</version> <!-- Make sure to use the latest version -->
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpmime</artifactId>
+			<version>4.5.13</version> <!-- Use the latest version available -->
+		</dependency>
+
+
+		<dependency>
+			<groupId>TestPostCommentJira</groupId>
+			<artifactId>TestPostCommentJira</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 

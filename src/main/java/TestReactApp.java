@@ -39,12 +39,11 @@ public class TestReactApp {
 	        
 	        RunApi runApi = new RunApi();
 	        
-	        runApi.postCommentSuccess("Test again");
+	        runApi.postCommentSuccess("all goods!","C:/Users/OneDrive/Desktop/report.html");
 			
 		}catch(Exception e) {
 			RunApi runApi = new RunApi();
 			
-			runApi.postCommentFailed();
 		}
 
 	}

@@ -1,4 +1,5 @@
 package api;
+/*
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.InputStream;
@@ -6,128 +7,85 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.io.BufferedReader;
+import java.io.BufferedReader;*/
+
+import java.util.Base64;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.entity.ContentType;
+
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.HttpMultipartMode;
+
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.http.entity.StringEntity;
 
 public class RunApi {
 	
-	public static void main(String[]args) {
+	public static void main(String[]args) throws ClientProtocolException, IOException {
 		RunApi runApi = new RunApi();
         
-        runApi.postCommentSuccess("all goods!");
+		//change path parameter
+        runApi.postCommentSuccess("all goods!","C:/Users/OneDrive/Desktop/report.html");
 	}
+	
+	public void postCommentSuccess(String message, String pathToFile) throws ClientProtocolException, IOException {
+		
+		//TODO: Config
+		//Example: TES-3
+        String issueKey = "";
+        
+        //change yourprojectdomain 
+        String jiraUrl = "https://yourprojectdomain.atlassian.net/rest/api/2/issue/" + issueKey + "/attachments";
+        
+        //Argument from paramaters
+        String filePath = pathToFile;
+        
+        //username / email in jire
+        String user = "";
+        
+        //toke generated from atlassian account settings > security > Create and manage API tokens
+        String token = ""; // Generate API token from JIRA
 
-    public void postCommentSuccess(String message) {
-        try {
-            // URL for the Jira API
-            URL url = new URL("https://testjiracommentjava.atlassian.net/rest/api/2/issue/TES-3/comment");
-            System.out.println("URL: " + url.toString());
+        HttpClient client = HttpClients.createDefault();
+        HttpPost post = new HttpPost(jiraUrl);
+        post.setHeader("X-Atlassian-Token", "no-check");
+        post.setHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + token).getBytes()));
 
-            // Open a connection (POST)
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("Accept", "application/json");
+        File fileToUpload = new File(filePath);
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        builder.addBinaryBody("file", fileToUpload, ContentType.DEFAULT_BINARY, fileToUpload.getName());
 
-            // Basic Authentication
-            String username = "kurt.bradley.jocson@gmail.com"; // Replace with your Jira email
-            String apiToken = "ATATT3xFfGF0r6vYuj8St5tuB_ybod4MOJFUXfQaTfrJVqNKeiEQe0iNirFD11f_NBjyEdAP5Lwb4JVTP9pFdHhLYYGGDDLyOG70dmhR6WK8eAmLTF4BkZjAkeMWkYrLIefnHgTIos90QA-bw5M2Gh6R2ylqK-AbKu5T3ls-F38UVqIFugH4b4E=201E2E77"; // Replace with your API token
-            String encodedCredentials = Base64.getEncoder().encodeToString((username + ":" + apiToken).getBytes(StandardCharsets.UTF_8));
-            connection.setRequestProperty("Authorization", "Basic " + encodedCredentials);
-            System.out.println("Authorization: Basic " + encodedCredentials);
+        post.setEntity(builder.build());
 
-            connection.setDoOutput(true);
+        HttpResponse response = client.execute(post);
+        System.out.println(response);
+        
+        //change yourprojectdomain
+        String commentUrl = "https://yourprojectdomain.atlassian.net/rest/api/2/issue/TES-3/comment";
+        
+        // Step 2: Add a Comment Referencing the Attachment
+        HttpPost postComment = new HttpPost(commentUrl);
+        postComment.setHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + token).getBytes()));
+        postComment.setHeader("Content-Type", "application/json");
+        
+        String jsonComment = "{\"body\": \""+message+" \nSee attached file: [^file.html]\"}";
+        StringEntity commentEntity = new StringEntity(jsonComment);
+        postComment.setEntity(commentEntity);
 
-            // JSON String to post
-            String jsonInputString = "{\"body\": \""+message+"\"}";
-            System.out.println("JSON Body: " + jsonInputString);
+        HttpResponse commentResponse = client.execute(postComment);
+        System.out.println(commentResponse);
+	}
+	
 
-            // Output stream to write data
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
+   
 
-            // Read the response
-            int responseCode = connection.getResponseCode();
-            System.out.println("POST Response Code :: " + responseCode);
-
-            // Read the response content
-            InputStream responseStream = responseCode < HttpURLConnection.HTTP_BAD_REQUEST ? connection.getInputStream() : connection.getErrorStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream));
-            String line;
-            StringBuilder responseContent = new StringBuilder();
-            while ((line = reader.readLine()) != null) {
-                responseContent.append(line);
-                responseContent.append("\n");
-            }
-            reader.close();
-
-            // Print the response content
-            System.out.println("Response Content :: " + responseContent.toString());
-
-            // Close connection
-            connection.disconnect();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
-    public void postCommentFailed() {
-        try {
-            // URL for the Jira API
-            URL url = new URL("https://testjiracommentjava.atlassian.net/rest/api/2/issue/TES-3/comment");
-            System.out.println("URL: " + url.toString());
-
-            // Open a connection (POST)
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("Accept", "application/json");
-
-            // Basic Authentication
-            String username = "kurt.bradley.jocson@gmail.com"; // Replace with your Jira email
-            String apiToken = "ATATT3xFfGF0r6vYuj8St5tuB_ybod4MOJFUXfQaTfrJVqNKeiEQe0iNirFD11f_NBjyEdAP5Lwb4JVTP9pFdHhLYYGGDDLyOG70dmhR6WK8eAmLTF4BkZjAkeMWkYrLIefnHgTIos90QA-bw5M2Gh6R2ylqK-AbKu5T3ls-F38UVqIFugH4b4E=201E2E77"; // Replace with your API token
-            String encodedCredentials = Base64.getEncoder().encodeToString((username + ":" + apiToken).getBytes(StandardCharsets.UTF_8));
-            connection.setRequestProperty("Authorization", "Basic " + encodedCredentials);
-            System.out.println("Authorization: Basic " + encodedCredentials);
-
-            connection.setDoOutput(true);
-
-            // JSON String to post
-            String jsonInputString = "{\"body\": \"many bad!!!\"}";
-            System.out.println("JSON Body: " + jsonInputString);
-
-            // Output stream to write data
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-
-            // Read the response
-            int responseCode = connection.getResponseCode();
-            System.out.println("POST Response Code :: " + responseCode);
-
-            // Read the response content
-            InputStream responseStream = responseCode < HttpURLConnection.HTTP_BAD_REQUEST ? connection.getInputStream() : connection.getErrorStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream));
-            String line;
-            StringBuilder responseContent = new StringBuilder();
-            while ((line = reader.readLine()) != null) {
-                responseContent.append(line);
-                responseContent.append("\n");
-            }
-            reader.close();
-
-            // Print the response content
-            System.out.println("Response Content :: " + responseContent.toString());
-
-            // Close connection
-            connection.disconnect();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
 }
